@@ -382,7 +382,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                             // signed in user can be handled in the listener.
                             if (!task.isSuccessful()) {
                                 Log.w("UserLoginTask", "signInWithEmail:failed", task.getException());
-                                
+
                                 FirebaseAuthException e = (FirebaseAuthException) task.getException();
 
                                 if (e.getErrorCode() == "ERROR_USER_NOT_FOUND"){
