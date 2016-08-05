@@ -65,6 +65,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      * Keep track of the login task to ensure we can cancel it if requested.
      */
     private UserLoginTask mAuthTask = null;
+    private UserRegisterTask mRegisterTask = null;
 
     // UI references.
     private AutoCompleteTextView mEmailView;
@@ -87,7 +88,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
                 if (id == R.id.login || id == EditorInfo.IME_NULL) {
-                    attemptLogin();
+                    attemptLoginOrRegister("LOGIN");
                     return true;
                 }
                 return false;
@@ -95,10 +96,17 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         });
 
         Button mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
+        Button mRegisterButton = (Button) findViewById(R.id.email_register_button);
         mEmailSignInButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                attemptLogin();
+                attemptLoginOrRegister("LOGIN");
+            }
+        });
+        mRegisterButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                attemptLoginOrRegister("REGISTER");
             }
         });
 
@@ -183,7 +191,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      * If there are form errors (invalid email, missing fields, etc.), the
      * errors are presented and no actual login attempt is made.
      */
-    private void attemptLogin() {
+    private void attemptLoginOrRegister(String mode) {
         Log.v("LoginActivity","attempting login");
         if (mAuthTask != null) {
             return;
@@ -226,8 +234,13 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             showProgress(true);
-            mAuthTask = new UserLoginTask(email, password);
-            mAuthTask.execute((Void) null);
+            if (mode == "LOGIN") {
+                mAuthTask = new UserLoginTask(email, password);
+                mAuthTask.execute((Void) null);
+            } else {
+                mRegisterTask = new UserRegisterTask(email, password);
+                mRegisterTask.execute((Void) null);
+            }
         }
     }
 
@@ -341,7 +354,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     }
 
     /**
-     * Represents an asynchronous login/registration task used to authenticate
+     * Represents an asynchronous login task used to authenticate
      * the user.
      */
     public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
@@ -371,34 +384,74 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                             if (!task.isSuccessful()) {
                                 Log.w("UserLoginTask", "signInWithEmail:failed", task.getException());
 
-                                FirebaseAuthException e = (FirebaseAuthException) task.getException();
-
-                                if (e.getErrorCode() == "ERROR_USER_NOT_FOUND"){
-                                    //if user is not found create user
-                                    mAuth.createUserWithEmailAndPassword(mEmail, mPassword)
-                                            .addOnCompleteListener(LoginActivity.this, new OnCompleteListener<AuthResult>() {
-                                                @Override
-                                                public void onComplete(@NonNull Task<AuthResult> task) {
-                                                    Log.d("UserLoginTask", "createUserWithEmail:onComplete:" + task.isSuccessful());
-
-                                                    // If sign in fails, display a message to the user. If sign in succeeds
-                                                    // the auth state listener will be notified and logic to handle the
-                                                    // signed in user can be handled in the listener.
-                                                    if (!task.isSuccessful()) {
-                                                        Toast.makeText(LoginActivity.this, "Unable to sign in or create account",
-                                                                Toast.LENGTH_SHORT).show();
-                                                    }
-
-
-                                                }
-                                            });
-
-                                }
                             }
 
 
                         }
                     });
+
+            return true;
+        }
+
+        @Override
+        protected void onPostExecute(final Boolean success) {
+            mAuthTask = null;
+            showProgress(false);
+
+            if (success) {
+                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                startActivity(intent);
+            } else {
+                mPasswordView.setError(getString(R.string.error_incorrect_password));
+                mPasswordView.requestFocus();
+            }
+        }
+
+        @Override
+        protected void onCancelled() {
+            mAuthTask = null;
+            showProgress(false);
+        }
+    }
+    /**
+     * Represents an asynchronous login task used to authenticate
+     * the user.
+     */
+    public class UserRegisterTask extends AsyncTask<Void, Void, Boolean> {
+
+        private final String mEmail;
+        private final String mPassword;
+
+        UserRegisterTask(String email, String password) {
+            mEmail = email;
+            mPassword = password;
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+
+            Log.v("UserRegisterTask","In User Register Background");
+
+
+                mAuth.createUserWithEmailAndPassword(mEmail, mPassword)
+                        .addOnCompleteListener(LoginActivity.this, new OnCompleteListener<AuthResult>() {
+                            @Override
+                            public void onComplete(@NonNull Task<AuthResult> task) {
+                                Log.d("UserRegisterTask", "createUserWithEmail:onComplete:" + task.isSuccessful());
+
+                                // If sign in fails, display a message to the user. If sign in succeeds
+                                // the auth state listener will be notified and logic to handle the
+                                // signed in user can be handled in the listener.
+                                if (!task.isSuccessful()) {
+                                    Toast.makeText(LoginActivity.this, "Unable to create account",
+                                            Toast.LENGTH_SHORT).show();
+                                }
+
+
+                            }
+                        });
+
+
 
             return true;
         }
