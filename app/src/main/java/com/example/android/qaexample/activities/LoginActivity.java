@@ -57,12 +57,6 @@ public class LoginActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
 
-    /**
-     * Keep track of the login task to ensure we can cancel it if requested.
-     */
-    private UserLoginTask mAuthTask = null;
-    private UserRegisterTask mRegisterTask = null;
-
     // UI references.
     private EditText mEmailView;
     private EditText mPasswordView;
@@ -83,7 +77,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
                 if (id == R.id.login || id == EditorInfo.IME_NULL) {
-                    attemptLoginOrRegister("LOGIN");
+                    attemptLogin();
                     return true;
                 }
                 return false;
@@ -95,13 +89,13 @@ public class LoginActivity extends AppCompatActivity {
         mEmailSignInButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                attemptLoginOrRegister("LOGIN");
+                attemptLogin();
             }
         });
         mRegisterButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                attemptLoginOrRegister("REGISTER");
+                attemptSignup();
             }
         });
 
@@ -143,12 +137,89 @@ public class LoginActivity extends AppCompatActivity {
      * If there are form errors (invalid email, missing fields, etc.), the
      * errors are presented and no actual login attempt is made.
      */
-    private void attemptLoginOrRegister(String mode) {
+    private void attemptLogin() {
         Log.v("LoginActivity","attempting login");
-        if (mAuthTask != null) {
-            return;
-        }
 
+        // Store values at the time of the login attempt.
+        String email = mEmailView.getText().toString();
+        String password = mPasswordView.getText().toString();
+
+        boolean valid = isFormValid();
+
+
+        if (valid) {
+            // Show a progress spinner, and kick off a background task to
+            // perform the user login attempt.
+            showProgress(true);
+            mAuth.signInWithEmailAndPassword(email, password)
+                    .addOnCompleteListener(LoginActivity.this, new OnCompleteListener<AuthResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<AuthResult> task) {
+                            Log.d("UserLoginTask", "signInWithEmail:onComplete:" + task.isSuccessful());
+
+                            // If sign in fails, display a message to the user. If sign in succeeds
+                            // the auth state listener will be notified and logic to handle the
+                            // signed in user can be handled in the listener.
+                            if (!task.isSuccessful()) {
+                                Log.w("UserLoginTask", "signInWithEmail:failed", task.getException());
+                            }
+                            showProgress(false);
+
+
+                        }
+                    });
+        }
+    }
+
+    private void attemptSignup() {
+        Log.v("LoginActivity","attempting signup");
+
+
+        // Reset errors.
+        mEmailView.setError(null);
+        mPasswordView.setError(null);
+
+        // Store values at the time of the login attempt.
+        String email = mEmailView.getText().toString();
+        String password = mPasswordView.getText().toString();
+
+        boolean valid = isFormValid();
+
+
+        if (valid) {
+            // Show a progress spinner, and kick off a background task to
+            // perform the user login attempt.
+            showProgress(true);
+            mAuth.createUserWithEmailAndPassword(email, password)
+                    .addOnCompleteListener(LoginActivity.this, new OnCompleteListener<AuthResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<AuthResult> task) {
+                            Log.d("UserRegisterTask", "createUserWithEmail:onComplete:" + task.isSuccessful());
+
+                            // If sign in fails, display a message to the user. If sign in succeeds
+                            // the auth state listener will be notified and logic to handle the
+                            // signed in user can be handled in the listener.
+                            if (!task.isSuccessful()) {
+                                Toast.makeText(LoginActivity.this, "Unable to create account",
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                            showProgress(false);
+
+
+                        }
+                    });
+        }
+    }
+
+    private boolean isEmailValid(String email) {
+        return email.contains("@");
+    }
+
+    private boolean isPasswordValid(String password) {
+        return password.length() > 4;
+    }
+
+    private boolean isFormValid(){
         // Reset errors.
         mEmailView.setError(null);
         mPasswordView.setError(null);
@@ -177,31 +248,12 @@ public class LoginActivity extends AppCompatActivity {
             focusView = mEmailView;
             cancel = true;
         }
-
         if (cancel) {
-            // There was an error; don't attempt login and focus the first
-            // form field with an error.
             focusView.requestFocus();
+            return false;
         } else {
-            // Show a progress spinner, and kick off a background task to
-            // perform the user login attempt.
-            showProgress(true);
-            if (mode == "LOGIN") {
-                mAuthTask = new UserLoginTask(email, password);
-                mAuthTask.execute((Void) null);
-            } else {
-                mRegisterTask = new UserRegisterTask(email, password);
-                mRegisterTask.execute((Void) null);
-            }
+            return true;
         }
-    }
-
-    private boolean isEmailValid(String email) {
-        return email.contains("@");
-    }
-
-    private boolean isPasswordValid(String password) {
-        return password.length() > 4;
     }
 
     /**
@@ -247,126 +299,6 @@ public class LoginActivity extends AppCompatActivity {
 
         if (mAuthListener != null){
             mAuth.removeAuthStateListener(mAuthListener);
-        }
-    }
-
-    /**
-     * Represents an asynchronous login task used to authenticate
-     * the user.
-     */
-    public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
-
-        private final String mEmail;
-        private final String mPassword;
-
-        UserLoginTask(String email, String password) {
-            mEmail = email;
-            mPassword = password;
-        }
-
-        @Override
-        protected Boolean doInBackground(Void... params) {
-
-            Log.v("UserTaskLogin","In User Task Login Background");
-            final boolean success = true;
-
-            mAuth.signInWithEmailAndPassword(mEmail, mPassword)
-                    .addOnCompleteListener(LoginActivity.this, new OnCompleteListener<AuthResult>() {
-                        @Override
-                        public void onComplete(@NonNull Task<AuthResult> task) {
-                            Log.d("UserLoginTask", "signInWithEmail:onComplete:" + task.isSuccessful());
-
-                            // If sign in fails, display a message to the user. If sign in succeeds
-                            // the auth state listener will be notified and logic to handle the
-                            // signed in user can be handled in the listener.
-                            if (!task.isSuccessful()) {
-                                Log.w("UserLoginTask", "signInWithEmail:failed", task.getException());
-
-
-                            }
-
-
-                        }
-                    });
-
-            return true;
-        }
-
-        @Override
-        protected void onPostExecute(final Boolean success) {
-            mAuthTask = null;
-            showProgress(false);
-
-            if (!success) {
-                mPasswordView.setError(getString(R.string.error_incorrect_password));
-                mPasswordView.requestFocus();
-            }
-        }
-
-        @Override
-        protected void onCancelled() {
-            mAuthTask = null;
-            showProgress(false);
-        }
-    }
-    /**
-     * Represents an asynchronous login task used to authenticate
-     * the user.
-     */
-    public class UserRegisterTask extends AsyncTask<Void, Void, Boolean> {
-
-        private final String mEmail;
-        private final String mPassword;
-
-        UserRegisterTask(String email, String password) {
-            mEmail = email;
-            mPassword = password;
-        }
-
-        @Override
-        protected Boolean doInBackground(Void... params) {
-
-            Log.v("UserRegisterTask","In User Register Background");
-
-
-                mAuth.createUserWithEmailAndPassword(mEmail, mPassword)
-                        .addOnCompleteListener(LoginActivity.this, new OnCompleteListener<AuthResult>() {
-                            @Override
-                            public void onComplete(@NonNull Task<AuthResult> task) {
-                                Log.d("UserRegisterTask", "createUserWithEmail:onComplete:" + task.isSuccessful());
-
-                                // If sign in fails, display a message to the user. If sign in succeeds
-                                // the auth state listener will be notified and logic to handle the
-                                // signed in user can be handled in the listener.
-                                if (!task.isSuccessful()) {
-                                    Toast.makeText(LoginActivity.this, "Unable to create account",
-                                            Toast.LENGTH_SHORT).show();
-                                }
-
-
-                            }
-                        });
-
-
-
-            return true;
-        }
-
-        @Override
-        protected void onPostExecute(final Boolean success) {
-            mAuthTask = null;
-            showProgress(false);
-
-            if (!success) {
-                Toast.makeText(LoginActivity.this, "Unable to create account",
-                        Toast.LENGTH_SHORT).show();
-            }
-        }
-
-        @Override
-        protected void onCancelled() {
-            mAuthTask = null;
-            showProgress(false);
         }
     }
 }

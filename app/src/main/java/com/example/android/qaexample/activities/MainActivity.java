@@ -24,13 +24,13 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
         if (user == null){
             Log.v("MainActivity", "not signed in");
             startActivity(new Intent(this, LoginActivity.class));
         } else {
-            super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_main);
 
             Button askBtn = (Button) findViewById(R.id.askBtn);
@@ -63,5 +63,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         mAdapter.cleanup();
+    }
+
+    public void signOutUser(){
+        FirebaseAuth.getInstance().signOut();
+        startActivity(new Intent(this, LoginActivity.class));
     }
 }
