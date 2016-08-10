@@ -1,9 +1,12 @@
 package com.example.android.qaexample.models;
 
+import java.io.Serializable;
+
 /**
  * Created by diyahm-pl on 8/3/16.
  */
-public class Question {
+public class Question implements Serializable {
+    private static final long serialVersionUID = -56543230L;
     private String title;
     private String content;
     private String uuid;

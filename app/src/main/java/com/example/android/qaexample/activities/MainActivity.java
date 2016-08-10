@@ -17,10 +17,12 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.io.Serializable;
+
 
 public class MainActivity extends AppCompatActivity {
     private DatabaseReference mDatabase;
-    private FirebaseListAdapter<Question> mAdapter;
+    private FirebaseListAdapter mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,12 +50,24 @@ public class MainActivity extends AppCompatActivity {
 
             mAdapter = new FirebaseListAdapter<Question>(this, Question.class, android.R.layout.two_line_list_item, mDatabase) {
                 @Override
-                protected void populateView(View view, Question question, int position) {
+                protected void populateView(View view, Question question, final int position) {
                     ((TextView)view.findViewById(android.R.id.text1)).setText(question.getTitle());
                     ((TextView)view.findViewById(android.R.id.text2)).setText(question.getContent());
 
+                    view.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            Intent i = new Intent(MainActivity.this, QuestionDetailActivity.class);
+                            i.putExtra("question", (Serializable) mAdapter.getItem(position));
+                            startActivity(i);
+                        }
+                    });
+
+
+
                 }
             };
+
             listView.setAdapter(mAdapter);
         }
 
