@@ -39,14 +39,14 @@ public class MainActivity extends AppCompatActivity {
             askBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    startActivity(new Intent(MainActivity.this,QuestionFormActivity.class));
+                    startActivity(new Intent(MainActivity.this,SubmitQuestionActivity.class));
                 }
             });
 
             ListView listView = (ListView) findViewById(R.id.questionsLV);
 
             //get instance of database
-            mDatabase = FirebaseDatabase.getInstance().getReference();
+            mDatabase = FirebaseDatabase.getInstance().getReference().child("questions");
 
             mAdapter = new FirebaseListAdapter<Question>(this, Question.class, android.R.layout.two_line_list_item, mDatabase) {
                 @Override
@@ -59,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
                         public void onClick(View view) {
                             Intent i = new Intent(MainActivity.this, QuestionDetailActivity.class);
                             i.putExtra("question", (Serializable) mAdapter.getItem(position));
+                            i.putExtra("question_key", mAdapter.getRef(position).getKey());
                             startActivity(i);
                         }
                     });

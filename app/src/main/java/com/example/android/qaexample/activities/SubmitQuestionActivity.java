@@ -15,18 +15,17 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-public class QuestionFormActivity extends AppCompatActivity {
+public class SubmitQuestionActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_question_form);
+        setContentView(R.layout.activity_submit_question);
 
         Button submitBtn = (Button) findViewById(R.id.submitBtn);
         submitBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.v("QuestionFormActivity", "on click");
                 EditText titleET= (EditText) findViewById(R.id.titleET);
                 EditText contentET = (EditText) findViewById(R.id.contentET);
                 String title = titleET.getText().toString();
@@ -35,16 +34,16 @@ public class QuestionFormActivity extends AppCompatActivity {
                 Question question = new Question(title, content,
                         FirebaseAuth.getInstance().getCurrentUser().getUid());
 
-                FirebaseDatabase.getInstance().getReference().push()
+                FirebaseDatabase.getInstance().getReference().child("questions").push()
                         .setValue(question, new DatabaseReference.CompletionListener() {
                             @Override
                             public void onComplete(DatabaseError databaseError, DatabaseReference reference) {
                                 if (databaseError != null) {
-                                    Toast.makeText(QuestionFormActivity.this,"Unable to submit question",
+                                    Toast.makeText(SubmitQuestionActivity.this,"Unable to submit question",
                                             Toast.LENGTH_SHORT).show();
                                 } else {
-                                    startActivity(new Intent(QuestionFormActivity.this, MainActivity.class));
-                                    Toast.makeText(QuestionFormActivity.this,"Question submitted",
+                                    startActivity(new Intent(SubmitQuestionActivity.this, MainActivity.class));
+                                    Toast.makeText(SubmitQuestionActivity.this,"Question submitted",
                                             Toast.LENGTH_SHORT).show();
                                 }
                             }

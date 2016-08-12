@@ -27,8 +27,9 @@
         <activity
             android:name=".activities.LoginActivity"
             android:label="@string/title_activity_login" />
-        <activity android:name=".activities.QuestionFormActivity" />
-        <activity android:name=".activities.QuestionDetailActivity"></activity>
+        <activity android:name=".activities.SubmitQuestionActivity" />
+        <activity android:name=".activities.QuestionDetailActivity" />
+        <activity android:name=".activities.SubmitAnswerActivity"></activity>
     </application>
 
 </manifest>

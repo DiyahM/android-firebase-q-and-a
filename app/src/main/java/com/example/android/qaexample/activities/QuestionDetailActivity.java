@@ -1,38 +1,66 @@
 package com.example.android.qaexample.activities;
 
 import com.example.android.qaexample.R;
+import com.example.android.qaexample.models.Answer;
 import com.example.android.qaexample.models.Question;
+import com.firebase.ui.database.FirebaseListAdapter;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.TextView;
+
+import java.io.Serializable;
 
 public class QuestionDetailActivity extends AppCompatActivity {
 
-    private TextView questionTextView;
-    private TextView descriptionTextView;
-    private Button answerBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_question_detail);
 
-        //fetch views
-        questionTextView = (TextView) findViewById(R.id.questionTV);
-        descriptionTextView = (TextView) findViewById(R.id.descriptionTV);
-        answerBtn = (Button) findViewById(R.id.answerBtn);
-
         Question question = (Question) getIntent().getSerializableExtra("question");
         loadQuestion(question);
+
+        ListView listView = (ListView) findViewById(R.id.answersLV);
+
+        String questionKey = getIntent().getStringExtra("question_key");
+
+        //get instance of database
+        DatabaseReference answersDatabase = FirebaseDatabase.getInstance().getReference()
+                .child("answers").child(questionKey);
+
+        FirebaseListAdapter answerAdapter = new FirebaseListAdapter<Answer>(this, Answer.class,
+                android.R.layout.simple_list_item_1, answersDatabase) {
+            @Override
+            protected void populateView(View view, Answer answer, final int position) {
+                ((TextView)view.findViewById(android.R.id.text1)).setText(answer.getText());
+            }
+        };
+
+        listView.setAdapter(answerAdapter);
 
     }
 
 
     private void loadQuestion(Question question){
+        TextView questionTextView = (TextView) findViewById(R.id.questionTV);
         questionTextView.setText(question.getTitle());
+
+        TextView descriptionTextView = (TextView) findViewById(R.id.descriptionTV);
         descriptionTextView.setText(question.getContent());
+    }
+
+    public void submitAnswer(View view){
+        Intent i = new Intent(this, SubmitAnswerActivity.class);
+        i.putExtra("question_key", getIntent().getStringExtra("question_key"));
+        startActivity(i);
     }
 
 }

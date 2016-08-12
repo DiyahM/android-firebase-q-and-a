@@ -40,7 +40,7 @@ public class Question implements Serializable {
         this.content = content;
     }
 
-    public void setUser(String uuid){
+    public void setUuid(String uuid){
         this.uuid = uuid;
     }
 }
